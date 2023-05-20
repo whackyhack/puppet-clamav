@@ -5,6 +5,33 @@
 # http://www.clamav.net
 # http://www.clamxav.com
 #
+# @param $clamav_package
+#  Package name of main application, usually 'clamav'.
+#  You can now use ClamAV's official package, also named 'clamav'.
+#
+# @param $manage_clamav_milter
+#  Whether to use this module to manage clamav-milter.
+#  Do not set to true if you use ClamAV's official package because
+#  as of 1.0.1 and 1.2.0, the package does not include clamav-milter binary.
+#  And error is triggered if $manage_clamav_milter is true and $clamav_milter_package is undef.
+#
+# @param $clamd_package
+#  Package name of SystemD support for clamd.
+#  If you use ClamAV's official package, explicitly set this to undef.
+#
+# @param $freshclam_package
+#  Package name of SystemD support for freshclam.
+#  If you use ClamAV's official package, explicitly set this to undef.
+#
+# @param $clamav_milter_package
+#  Package name of SystemD support for clamav-milter.
+#  If you use ClamAV's official package, explicitly set this to undef.
+#
+# @param $clamav_base
+#  Path to clamav install base.
+#  Unused except for ClamAV's official package, which may differ
+#  from conventions used by Linux distributions.
+#
 
 class clamav (
   Boolean $manage_user          = $clamav::params::manage_user,
@@ -14,6 +41,7 @@ class clamav (
   Boolean $manage_clamav_milter = $clamav::params::manage_clamav_milter,
   String $clamav_package        = $clamav::params::clamav_package,
   String $clamav_version        = $clamav::params::clamav_version,
+  String $clamav_base           = $clamav::params::clamav_base,
 
   $user                         = $clamav::params::user,
   Optional[String] $comment     = $clamav::params::comment,
@@ -51,6 +79,11 @@ class clamav (
   $clamav_milter_options        = $clamav::params::clamav_milter_options,
 ) inherits clamav::params {
 
+  # Avoid inconsistent signaling of official ClamAV package
+  if ($manage_freshclam AND $manage_clamd AND ($freshclam_package XOR $clamd_package)) {
+    fail('If $manage_freshclam and $manage_clamd are both set, either use both $freshclam_package and $clamd_package or set them both to undef.')
+  }
+
   # clamd
   $_clamd_options = merge($clamav::params::clamd_default_options, $clamd_options)
 
@@ -59,6 +92,10 @@ class clamav (
 
   # clamav_milter
   if $manage_clamav_milter {
+    unless $clamav_milter_package {
+    # As of 1.0.1 and 1.2.0, ClamAV's official package does not include clamav-milter binary.
+      fail('$clamav_milter_package is needed.')
+    }
     assert_type(String, $clamav_milter_package)
     assert_type(String, $clamav_milter_version)
     assert_type(Stdlib::Absolutepath, $clamav_milter_config)

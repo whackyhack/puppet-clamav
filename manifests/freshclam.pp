@@ -15,6 +15,17 @@ class clamav::freshclam {
       name   => $clamav::freshclam_package,
       before => File['freshclam.conf'],
     }
+  } else {
+  # Default base in ClamAV's official package is /usr/local.
+    if $clamav::clamav_base {
+      $exec_path = "${clamav::clamav_base}/bin"
+    } else {
+      $exec_path = '/usr/local/bin'
+    }
+    systemd::unit_file { '/etc/systemd/system/clamav-freshclam.service':
+      path    => $name,
+      content => template('/etc/systemd/system/clamav-freshclam.service.erb'),
+    }
   }
 
   file { 'freshclam.conf':

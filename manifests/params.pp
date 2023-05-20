@@ -18,6 +18,11 @@ class clamav::params {
   $clamav_milter_service_ensure = 'running'
   $clamav_milter_service_enable = true
 
+  unless ($clamav::clamd_package OR $clamav::freshclam_package) {
+  # only used with ClamAV's official package
+    $clamav_base       = '/usr/local',
+  }
+
   if ($::osfamily == 'RedHat') and (versioncmp($::operatingsystemrelease, '6.0') >= 0) {
     # ### init vars ####
     $manage_repo    = true
@@ -125,8 +130,11 @@ class clamav::params {
     $clamd_default_logrotate          = undef
     $clamd_default_logsyslog          = true
     $clamd_default_temporarydirectory = '/var/tmp'
-    $freshclam_default_pidfile        = undef # cron is used
-
+    if $clamav::freshclam_package {
+      $freshclam_default_pidfile      = undef # cron is used
+    } else {
+      $freshclam_default_pidfile      = '/var/run/clamav/freshclam.pid'
+    }
   } elsif ($::osfamily == 'Debian') and (
     (($::operatingsystem == 'Debian') and (versioncmp($::operatingsystemrelease, '7.0') >= 0)) or
     (($::operatingsystem == 'Ubuntu') and (versioncmp($::operatingsystemrelease, '12.0') >= 0))

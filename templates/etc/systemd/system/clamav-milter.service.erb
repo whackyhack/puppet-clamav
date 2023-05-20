@@ -7,7 +7,7 @@ After = clamd@scan.service
 
 [Service]
 Type = forking
-ExecStart = /usr/sbin/clamav-milter -c /etc/mail/clamav-milter.conf
+ExecStart = <%= @exec_path -%>/clamav-milter -c /etc/mail/clamav-milter.conf
 Restart = on-failure
 
 User=clamilt

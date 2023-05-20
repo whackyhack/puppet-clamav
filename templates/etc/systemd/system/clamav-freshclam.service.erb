@@ -7,7 +7,7 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/freshclam -d --foreground=true
+ExecStart=<%= @exec_path -%>/freshclam -d --foreground=true
 
 [Install]
 WantedBy=multi-user.target
